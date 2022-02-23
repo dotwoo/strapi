@@ -1,0 +1,70 @@
+version: "3"
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    # ports:
+    #   - 27017:27017
+    environment:
+      - TZ=Asia/Shanghai
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+    volumes:
+      - type: volume
+        source: mongo
+        target: /data/db
+    networks:
+      docker_net:
+        ipv4_address: 172.22.0.11
+
+  # starpi
+  strapi-app:
+    image: strapi/strapi
+    container_name: strapi-app
+    restart: always
+    ports:
+      - 1337:1337
+    # command: strapi build
+    # command: strapi start
+    # command: strapi develop
+    environment:
+      - TZ=Asia/Shanghai
+      - DATABASE_CLIENT=mongo
+      - DATABASE_HOST=mongo
+      - DATABASE_PORT=27017
+      - DATABASE_NAME=strapi
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=123456
+      - DATABASE_AUTHENTICATION_DATABASE=strapi
+      # - NODE_ENV=production
+    depends_on:
+      - mongo
+    volumes:
+      - type: volume
+        source: strapi
+        target: /srv/app
+    networks:
+      docker_net:
+        ipv4_address: 172.22.0.12
+
+volumes:
+  mongo:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker-data/mongo
+  strapi:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker-data/strapi-app
+
+networks:
+  docker_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
